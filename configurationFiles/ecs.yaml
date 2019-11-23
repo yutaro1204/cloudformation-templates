@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: "default"
+      Tags:
+        -
+          Key: "Name"
+          Value: "vpcA"
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: "Name"
+          Value: "igwA"
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref IGW
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.0.0/20"
+      AvailabilityZone: "ap-northeast-1a"
+      Tags:
+        -
+          Key: "Name"
+          Value: "SubnetA"
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: "Name"
+          Value: "RouteTableA"
+  AttachSubnet:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet
+  AttachRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref IGW
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "SampleSecurityGroup"
+      GroupName: "sampleSecurityGroup"
+      SecurityGroupEgress: # Outbound rules
+        -
+          IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: '0.0.0.0/0'
+        -
+          IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIpv6: '::/0'
+      SecurityGroupIngress: # Inbound rules
+        -
+          IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: '0.0.0.0/0'
+        -
+          IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIpv6: '::/0'
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: "Name"
+          Value: "SecurityGroupA"
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: "SampleCluster"
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      LaunchType: "FARGATE"
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: "ENABLED"
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets:
+            - !Ref Subnet
+      ServiceName: "SampleService"
+      TaskDefinition: "nginx-sample-task"
+    DependsOn:
+      - "ECSTaskDefinition"
+      - "Subnet"
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        -
+          # Cpu: 10
+          Essential: true
+          Image: "915217444612.dkr.ecr.ap-northeast-1.amazonaws.com/sample-nginx:latest"
+          # Memory: 300
+          Name: "nginx"
+      Cpu: 256
+      ExecutionRoleArn: "arn:aws:iam::915217444612:role/ECSRoleForCloudFormation"
+      Family: "nginx-sample-task"
+      Memory: 512
+      NetworkMode: "awsvpc"
+      RequiresCompatibilities:
+        - "FARGATE"
