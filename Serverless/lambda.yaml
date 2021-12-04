@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  SampleLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: 'nodejs12.x'
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk')
+          exports.handler = function(event, context) {
+            const response = {
+              statusCode: 200,
+              body: { data: 'Hello world' },
+              headers: { 'Content-Type': 'application/json' },
+            }
+            return response
+          }
+      Handler: 'index.handler'
+      Role: !GetAtt SampleLambdaRole.Arn
+  SampleLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
