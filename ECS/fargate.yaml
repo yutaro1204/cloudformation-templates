@@ -112,12 +112,12 @@ Resources:
       ContainerDefinitions:
         -
           # Cpu: 10
-          Essential: true
-          Image: "915217444612.dkr.ecr.ap-northeast-1.amazonaws.com/sample-nginx:latest"
-          # Memory: 300
+          # Essential: true
+          Image: "054466368801.dkr.ecr.ap-northeast-1.amazonaws.com/dear_development:latest"
+          Memory: 300
           Name: "nginx"
       Cpu: 256
-      ExecutionRoleArn: "arn:aws:iam::915217444612:role/ECSRoleForCloudFormation"
+      ExecutionRoleArn: "arn:aws:iam::054466368801:role/DearDevelopmentECSTaskExecutionRole"
       Family: "nginx-sample-task"
       Memory: 512
       NetworkMode: "awsvpc"
